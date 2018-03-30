@@ -1,5 +1,10 @@
 include(vcpkg_common_functions)
 
+if(EXISTS ${CURRENT_BUILDTREES_DIR}/src/InsightSoftwareConsortium-ITK-d92873e33e8a54e933e445b92151191f02feab42.tar.gz.extracted
+    AND NOT EXISTS ${CURRENT_BUILDTREES_DIR}/src/ITK-d92873e33e8a54e933e445b92151191f02feab42)
+    file(REMOVE ${CURRENT_BUILDTREES_DIR}/src/InsightSoftwareConsortium-ITK-d92873e33e8a54e933e445b92151191f02feab42.tar.gz.extracted)
+endif()
+
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO InsightSoftwareConsortium/ITK
@@ -8,9 +13,10 @@ vcpkg_from_github(
     HEAD_REF master
 )
 
-# directory path length needs to be shorter than 50 characters
-file(RENAME ${SOURCE_PATH} ${CURRENT_BUILDTREES_DIR}/ITK)
-set(SOURCE_PATH "${CURRENT_BUILDTREES_DIR}/ITK")
+file(REMOVE_RECURSE
+    "${SOURCE_PATH}/Modules/ThirdParty/HDF5/src/itkhdf5"
+    "${SOURCE_PATH}/Modules/ThirdParty/HDF5/src/CMakeLists.txt"
+)
 
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
@@ -26,26 +32,25 @@ vcpkg_configure_cmake(
         -DITK_FUTURE_LEGACY_REMOVE=ON
         -DITK_USE_64BITS_IDS=ON
         -DITK_USE_CONCEPT_CHECKING=ON
-        #-DITK_USE_SYSTEM_LIBRARIES=ON # enables USE_SYSTEM for all third party libraries, some of which do not have vcpkg ports such as CastXML, SWIG, MINC etc
+        -DITK_USE_SYSTEM_LIBRARIES=ON # enables USE_SYSTEM for all third party libraries, some of which do not have vcpkg ports such as CastXML, SWIG, MINC etc
         -DITK_USE_SYSTEM_DOUBLECONVERSION=ON
         -DITK_USE_SYSTEM_EXPAT=ON
         -DITK_USE_SYSTEM_JPEG=ON
         -DITK_USE_SYSTEM_PNG=ON
         -DITK_USE_SYSTEM_TIFF=ON
         -DITK_USE_SYSTEM_ZLIB=ON
-        -DITK_FORBID_DOWNLOADS=OFF
+        -DITK_FORBID_DOWNLOADS=ON
+        -DITK_SKIP_PATH_LENGTH_CHECKS=ON
+        -DITK_BUILD_DEFAULT_MODULES=OFF
 
         # I havn't tried Python wrapping in vcpkg
-        #-DITK_WRAP_PYTHON=ON
+        -DITK_WRAP_PYTHON=OFF
         #-DITK_PYTHON_VERSION=3
 
-        # HDF5 must NOT be installed, otherwise it causes: ...\installed\x64-windows-static\include\H5Tpkg.h(25): fatal error C1189: #error:  "Do not include this file outside the H5T package!"
-        -DITK_USE_SYSTEM_HDF5=OFF # if ON, causes: ...\buildtrees\itk\x64-windows-static-rel\Modules\ThirdParty\HDF5\src\itk_H5Cpp.h(25): fatal error C1083: Cannot open include file: 'H5Cpp.h': No such file or directory
-
         # -DModule_ITKVtkGlue=ON # this option requires VTK to be a dependency in CONTROL file. VTK depends on HDF5!
-        -DModule_IOSTL=ON # example how to turn on a non-default module
-        -DModule_MorphologicalContourInterpolation=ON # example how to turn on a remote module
-        -DModule_RLEImage=ON # example how to turn on a remote module
+        # -DModule_IOSTL=ON # example how to turn on a non-default module
+        # -DModule_MorphologicalContourInterpolation=ON # example how to turn on a remote module
+        # -DModule_RLEImage=ON # example how to turn on a remote module
         ${ADDITIONAL_OPTIONS}
 )
 
