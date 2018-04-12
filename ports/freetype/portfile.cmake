@@ -1,29 +1,27 @@
 include(vcpkg_common_functions)
-set(FT_VERSION 2.8.1)
-set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/freetype-${FT_VERSION})
-vcpkg_download_distfile(ARCHIVE
-    URLS "http://download.savannah.gnu.org/releases/freetype/freetype-${FT_VERSION}.tar.bz2"
-    FILENAME "freetype-${FT_VERSION}.tar.bz2"
-    SHA512 ca59e47f0fceeeb9b8032be2671072604d0c79094675df24187829c05e99757d0a48a0f8062d4d688e056f783aa8f6090d732ad116562e94784fccf1339eb823
+
+# This should be changed to the official repo
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO madig/freetype2
+    REF modernize-cmake-further
+    SHA512 99edc6f03c49d2e0eaf4c763088396c21b68baf9579ece50d4744fbf8a38ccf41b406b9ab8573d54ab894758501c40ff30acb9240859951ba518f7e5c75b08f6
+    HEAD_REF master
 )
-vcpkg_extract_source_archive(${ARCHIVE})
 
 vcpkg_apply_patches(
     SOURCE_PATH ${SOURCE_PATH}
-    PATCHES ${CMAKE_CURRENT_LIST_DIR}/0001-Support-Windows-DLLs-via-CMAKE_WINDOWS_EXPORT_ALL_SY.patch
-            ${CMAKE_CURRENT_LIST_DIR}/0002-Add-CONFIG_INSTALL_PATH-option.patch
-            ${CMAKE_CURRENT_LIST_DIR}/0003-Fix-UWP.patch
+    PATCHES ${CMAKE_CURRENT_LIST_DIR}/0003-Fix-UWP.patch # Remaining patch needs fixup
 )
-
+message(STATUS ${SOURCE_PATH})
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA
     OPTIONS
-        -DCONFIG_INSTALL_PATH=share/freetype
-        -DWITH_ZLIB=ON
-        -DWITH_BZip2=ON
-        -DWITH_PNG=ON
-        -DWITH_HarfBuzz=OFF
+        -DFT_WITH_ZLIB=ON
+        -DFT_WITH_BZIP2=ON
+        -DFT_WITH_PNG=ON
+        -DFT_WITH_HARFBUZZ=OFF
 )
 
 vcpkg_install_cmake()
